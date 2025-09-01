@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Latihan Matematika</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+    <div id="main-container" class="bg-white rounded-3xl shadow-xl w-full max-w-lg p-8 text-center transition-all duration-500">
+        <!-- Konten akan di-render oleh JavaScript -->
+    </div>
+
+    <script>
+        const mainContainer = document.getElementById('main-container');
+        let userName = '';
+        let mode = '';
+        let operation = '';
+        let number = 0;
+        let totalQuestions = 0;
+        let questions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let timerInterval;
+        let testAnswers = [];
+        let timerSeconds = 30;
+        let startTimePerQuestion;
+        let totalTimeElapsed = 0;
+
+        // Tampilkan halaman awal
+        function renderStartPage() {
+            mainContainer.innerHTML = `
+                <div id="start-screen" class="space-y-6">
+                    <h1 class="text-4xl font-extrabold text-gray-900 mb-4">Aplikasi Latihan Matematika</h1>
+                    <p class="text-gray-600">Selamat datang! Masukkan nama Anda untuk memulai.</p>
+                    <input type="text" id="name-input" placeholder="Nama Anda" class="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all duration-300">
+                    <button onclick="setName()" class="w-full py-3 text-lg font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors duration-300">Mulai</button>
+                    <div id="alert-message" class="mt-4 hidden p-3 bg-red-100 text-red-700 rounded-lg"></div>
+                </div>
+            `;
+            animateElement('#start-screen');
+            document.getElementById('name-input').focus();
+        }
+
+        // Tampilkan pesan kesalahan
+        function showAlert(message) {
+            const alertBox = document.getElementById('alert-message');
+            alertBox.textContent = message;
+            alertBox.classList.remove('hidden');
+        }
+
+        // Simpan nama dan tampilkan halaman pilihan operasi
+        function setName() {
+            const nameInput = document.getElementById('name-input');
+            userName = nameInput.value.trim();
+            if (userName) {
+                renderOperationSelection();
+            } else {
+                showAlert("Silakan masukkan nama Anda!");
+            }
+        }
+
+        // Tampilkan halaman pilihan operasi (Perkalian atau Pembagian)
+        function renderOperationSelection() {
+            mainContainer.innerHTML = `
+                <div id="operation-screen" class="space-y-6">
+                    <h1 class="text-4xl font-bold text-gray-800">Hai, ${userName}!</h1>
+                    <p class="text-gray-600">Pilih operasi matematika yang ingin Anda latih:</p>
+                    <div class="space-y-4">
+                        <button onclick="setOperation('perkalian')" class="w-full py-4 text-xl font-semibold text-white bg-green-500 rounded-xl hover:bg-green-600 transition-colors duration-300 transform hover:scale-105">Perkalian</button>
+                        <button onclick="setOperation('pembagian')" class="w-full py-4 text-xl font-semibold text-white bg-blue-500 rounded-xl hover:bg-blue-600 transition-colors duration-300 transform hover:scale-105">Pembagian</button>
+                    </div>
+                    <button onclick="renderStartPage()" class="mt-6 w-full py-3 text-lg font-semibold text-gray-700 bg-gray-200 rounded-xl hover:bg-gray-300 transition-colors duration-300">Kembali</button>
+                </div>
+            `;
+            animateElement('#operation-screen');
+        }
+
+        // Simpan operasi dan tampilkan halaman pilihan mode
+        function setOperation(selectedOperation) {
+            operation = selectedOperation;
+            renderModeSelection();
+        }
+
+        // Tampilkan halaman pilihan mode (Latihan atau Tes)
+        function renderModeSelection() {
+            mainContainer.innerHTML = `
+                <div id="mode-screen" class="space-y-6">
+                    <h1 class="text-4xl font-bold text-gray-800">Mode Latihan</h1>
+                    <p class="text-gray-600">Pilih mode latihan Anda untuk ${operation}:</p>
+                    <div class="space-y-4">
+                        <button onclick="setMode('latihan')" class="w-full py-4 text-xl font-semibold text-white bg-purple-500 rounded-xl hover:bg-purple-600 transition-colors duration-300 transform hover:scale-105">Latihan Hafalan (Flash Card)</button>
+                        <button onclick="setMode('tes')" class="w-full py-4 text-xl font-semibold text-white bg-orange-500 rounded-xl hover:bg-orange-600 transition-colors duration-300 transform hover:scale-105">Tes Hafalan (Isian Singkat)</button>
+                    </div>
+                    <button onclick="renderOperationSelection()" class="mt-6 w-full py-3 text-lg font-semibold text-gray-700 bg-gray-200 rounded-xl hover:bg-gray-300 transition-colors duration-300">Kembali</button>
+                </div>
+            `;
+            animateElement('#mode-screen');
+        }
+
+        // Simpan mode dan tampilkan halaman pilihan angka
+        function setMode(selectedMode) {
+            mode = selectedMode;
+            renderNumberSelection();
+        }
+        
+        // Tampilkan halaman pilihan angka
+        function renderNumberSelection() {
+            mainContainer.innerHTML = `
+                <div id="number-screen" class="space-y-6">
+                    <h1 class="text-3xl font-bold text-gray-800">Pilih Angka</h1>
+                    <p class="text-gray-600">Pilih tabel ${operation} yang ingin Anda kuasai:</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        ${Array.from({length: 10}, (_, i) => i + 1).map(num => `
+                            <button onclick="setNumber(${num})" class="w-full py-3 text-lg font-semibold text-white bg-pink-500 rounded-xl hover:bg-pink-600 transition-colors duration-300 transform hover:scale-105">${num}</button>
+                        `).join('')}
+                    </div>
+                    <button onclick="renderModeSelection()" class="mt-6 w-full py-3 text-lg font-semibold text-gray-700 bg-gray-200 rounded-xl hover:bg-gray-300 transition-colors duration-300">Kembali</button>
+                </div>
+            `;
+            animateElement('#number-screen');
+        }
+
+        // Simpan angka dan tampilkan halaman pilihan jumlah soal
+        function setNumber(selectedNumber) {
+            number = selectedNumber;
+            renderQuestionCountSelection();
+        }
+
+        // Tampilkan halaman pilihan jumlah soal
+        function renderQuestionCountSelection() {
+            mainContainer.innerHTML = `
+                <div id="count-screen" class="space-y-6">
+                    <h1 class="text-3xl font-bold text-gray-800">Pilih Jumlah Soal</h1>
+                    <p class="text-gray-600">Pilih berapa soal yang ingin Anda kerjakan:</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button onclick="setQuestionCount(5)" class="py-3 text-lg font-semibold text-white bg-yellow-500 rounded-xl hover:bg-yellow-600 transition-colors duration-300 transform hover:scale-105">5 Soal</button>
+                        <button onclick="setQuestionCount(10)" class="py-3 text-lg font-semibold text-white bg-yellow-500 rounded-xl hover:bg-yellow-600 transition-colors duration-300 transform hover:scale-105">10 Soal</button>
+                        <button onclick="setQuestionCount(15)" class="py-3 text-lg font-semibold text-white bg-yellow-500 rounded-xl hover:bg-yellow-600 transition-colors duration-300 transform hover:scale-105">15 Soal</button>
+                        <button onclick="setQuestionCount(20)" class="py-3 text-lg font-semibold text-white bg-yellow-500 rounded-xl hover:bg-yellow-600 transition-colors duration-300 transform hover:scale-105">20 Soal</button>
+                    </div>
+                    <button onclick="renderNumberSelection()" class="mt-6 w-full py-3 text-lg font-semibold text-gray-700 bg-gray-200 rounded-xl hover:bg-gray-300 transition-colors duration-300">Kembali</button>
+                </div>
+            `;
+            animateElement('#count-screen');
+        }
+
+        // Simpan jumlah soal dan tampilkan halaman pilihan kesulitan
+        function setQuestionCount(count) {
+            totalQuestions = count;
+            renderDifficultySelection();
+        }
+
+        // Tampilkan halaman pilihan kesulitan
+        function renderDifficultySelection() {
+            mainContainer.innerHTML = `
+                <div id="difficulty-screen" class="space-y-6">
+                    <h1 class="text-3xl font-bold text-gray-800">Pilih Tingkat Kesulitan</h1>
+                    <p class="text-gray-600">Pilih batas waktu untuk setiap soal:</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <button onclick="setDifficulty('mudah')" class="py-3 text-lg font-semibold text-white bg-green-500 rounded-xl hover:bg-green-600 transition-colors duration-300 transform hover:scale-105">Mudah (30s)</button>
+                        <button onclick="setDifficulty('sedang')" class="py-3 text-lg font-semibold text-white bg-yellow-500 rounded-xl hover:bg-yellow-600 transition-colors duration-300 transform hover:scale-105">Sedang (20s)</button>
+                        <button onclick="setDifficulty('sulit')" class="py-3 text-lg font-semibold text-white bg-red-500 rounded-xl hover:bg-red-600 transition-colors duration-300 transform hover:scale-105">Sulit (10s)</button>
+                    </div>
+                    <button onclick="renderQuestionCountSelection()" class="mt-6 w-full py-3 text-lg font-semibold text-gray-700 bg-gray-200 rounded-xl hover:bg-gray-300 transition-colors duration-300">Kembali</button>
+                </div>
+            `;
+            animateElement('#difficulty-screen');
+        }
+
+        // Simpan kesulitan dan mulai tes atau latihan
+        function setDifficulty(difficulty) {
+            switch(difficulty) {
+                case 'mudah':
+                    timerSeconds = 30;
+                    break;
+                case 'sedang':
+                    timerSeconds = 20;
+                    break;
+                case 'sulit':
+                    timerSeconds = 10;
+                    break;
+            }
+            generateQuestions();
+            currentQuestionIndex = 0;
+            score = 0;
+            testAnswers = [];
+            totalTimeElapsed = 0;
+            if (mode === 'latihan') {
+                renderFlashcard();
+            } else {
+                renderTestQuestion();
+            }
+        }
+
+        // Buat soal acak tanpa pengulangan berurutan
+        function generateQuestions() {
+            questions = [];
+            let possibleNumbers = Array.from({length: 10}, (_, i) => i + 1);
+            let lastNumber = -1;
+            
+            for (let i = 0; i < totalQuestions; i++) {
+                let questionNumber;
+                let multiplierNumber;
+
+                if (operation === 'perkalian') {
+                    do {
+                        questionNumber = possibleNumbers[Math.floor(Math.random() * possibleNumbers.length)];
+                    } while (questionNumber === lastNumber);
+                    questions.push({
+                        a: questionNumber,
+                        b: number,
+                        answer: questionNumber * number
+                    });
+                    lastNumber = questionNumber;
+                } else { // Pembagian
+                     do {
+                        multiplierNumber = possibleNumbers[Math.floor(Math.random() * possibleNumbers.length)];
+                    } while (multiplierNumber === lastNumber);
+                    
+                    const questionA = number * multiplierNumber;
+                    questions.push({
+                        a: questionA,
+                        b: number,
+                        answer: multiplierNumber
+                    });
+                    lastNumber = multiplierNumber;
+                }
+            }
+        }
+
+        // Fungsi animasi menggunakan anime.js
+        function animateElement(selector) {
+            anime({
+                targets: selector,
+                scale: [0.95, 1],
+                opacity: [0, 1],
+                translateY: [20, 0],
+                duration: 800,
+                easing: 'easeOutQuad'
+            });
+        }
+
+        // Tampilkan flash card
+        function renderFlashcard() {
+            if (currentQuestionIndex >= totalQuestions) {
+                renderResultPage();
+                return;
+            }
+            const question = questions[currentQuestionIndex];
+            const symbol = operation === 'perkalian' ? 'x' : '÷';
+            const questionText = operation === 'perkalian' ? 
+                `${question.a} ${symbol} ${question.b}` : 
+                `${question.a} ${symbol} ${question.b}`;
+            
+            mainContainer.innerHTML = `
+                <div id="flashcard-screen" class="space-y-6">
+                    <h2 class="text-3xl font-semibold text-gray-700">Latihan Flash Card: ${operation} ${number}</h2>
+                    <div class="w-full max-w-sm mx-auto h-64 p-4 [perspective:1000px]">
+                        <div id="flashcard" class="relative w-full h-full rounded-2xl shadow-xl bg-gray-100 cursor-pointer transition-transform duration-500 [transform-style:preserve-3d]" onclick="flipFlashcard()">
+                            <!-- Front side -->
+                            <div class="absolute inset-0 flex flex-col items-center justify-center text-5xl font-extrabold text-gray-800 [backface-visibility:hidden] p-4">
+                                ${questionText}
+                            </div>
+                            <!-- Back side -->
+                            <div class="absolute inset-0 flex flex-col items-center justify-center text-5xl font-extrabold text-green-700 [backface-visibility:hidden] [transform:rotateY(180deg)] p-4">
+                                ${question.answer}
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="nextFlashcard()" class="w-full py-3 text-lg font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors duration-300">Soal Berikutnya</button>
+                    <div class="text-gray-500 mt-4">Soal ${currentQuestionIndex + 1} dari ${totalQuestions}</div>
+                </div>
+            `;
+            animateElement('#flashcard-screen');
+        }
+
+        // Balik flash card
+        function flipFlashcard() {
+            const flashcard = document.getElementById('flashcard');
+            flashcard.classList.toggle('[transform:rotateY(180deg)]');
+        }
+
+        // Lanjut ke flash card berikutnya
+        function nextFlashcard() {
+            currentQuestionIndex++;
+            renderFlashcard();
+        }
+
+        // Tampilkan halaman tes
+        function renderTestQuestion() {
+            if (currentQuestionIndex >= totalQuestions) {
+                renderResultPage();
+                return;
+            }
+            const question = questions[currentQuestionIndex];
+            const symbol = operation === 'perkalian' ? 'x' : '÷';
+            const questionText = operation === 'perkalian' ? 
+                `${question.a} ${symbol} ${question.b} = ?` : 
+                `${question.a} ${symbol} ${question.b} = ?`;
+
+            // Set timer
+            let remainingTime = timerSeconds;
+            startTimePerQuestion = Date.now();
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                remainingTime--;
+                if (remainingTime <= 0) {
+                    clearInterval(timerInterval);
+                    checkAnswer(true); // Waktu habis
+                }
+                updateTimerDisplay(remainingTime);
+            }, 1000);
+
+            mainContainer.innerHTML = `
+                <div id="test-screen" class="space-y-6">
+                    <h2 class="text-3xl font-semibold text-gray-700">Tes ${operation}: ${number}</h2>
+                    <div class="flex justify-between items-center text-gray-700">
+                        <span class="text-xl font-bold">Soal ${currentQuestionIndex + 1} dari ${totalQuestions}</span>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-red-500 font-bold text-2xl">Waktu: <span id="timer-display">${remainingTime}</span>s</span>
+                        </div>
+                    </div>
+                    <div id="question-element" class="text-5xl font-extrabold text-indigo-600 p-6 bg-gray-100 rounded-xl">${questionText}</div>
+                    <input type="number" id="answer-input" placeholder="Jawaban Anda" class="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all duration-300">
+                    <button onclick="checkAnswer(false)" class="w-full py-3 text-lg font-semibold text-white bg-green-500 rounded-xl hover:bg-green-600 transition-colors duration-300">Jawab</button>
+                </div>
+            `;
+            animateElement('#test-screen');
+            document.getElementById('answer-input').focus();
+        }
+
+        // Update tampilan timer
+        function updateTimerDisplay(time) {
+            const timerDisplay = document.getElementById('timer-display');
+            if (timerDisplay) {
+                timerDisplay.textContent = time;
+            }
+        }
+
+        // Cek jawaban tes
+        function checkAnswer(timeout) {
+            clearInterval(timerInterval);
+            const endTimePerQuestion = Date.now();
+            const timeTaken = ((endTimePerQuestion - startTimePerQuestion) / 1000).toFixed(2);
+            
+            const answerInput = document.getElementById('answer-input');
+            const userAnswer = parseInt(answerInput.value);
+            const question = questions[currentQuestionIndex];
+            const isCorrect = userAnswer === question.answer;
+
+            testAnswers.push({
+                question: `${question.a} ${operation === 'perkalian' ? 'x' : '÷'} ${question.b}`,
+                userAnswer: timeout ? 'Waktu habis' : (isNaN(userAnswer) ? 'Tidak dijawab' : userAnswer),
+                correctAnswer: question.answer,
+                isCorrect: isCorrect,
+                time: timeout ? 'N/A' : timeTaken + 's'
+            });
+            
+            if (!timeout) {
+                totalTimeElapsed += parseFloat(timeTaken);
+            }
+
+            if (isCorrect) {
+                score++;
+            }
+
+            currentQuestionIndex++;
+            renderTestQuestion();
+        }
+
+        // Tampilkan halaman hasil
+        function renderResultPage() {
+            clearInterval(timerInterval);
+            const formattedTotalTime = totalTimeElapsed.toFixed(2);
+            let resultHTML = `
+                <div id="result-content" class="text-left space-y-6">
+                    <h1 class="text-3xl font-bold text-gray-800 text-center">Hasil Latihan</h1>
+                    <div class="bg-gray-100 p-6 rounded-lg space-y-2">
+                        <p class="text-lg font-medium"><strong>Nama Siswa:</strong> ${userName}</p>
+                        <p class="text-lg font-medium"><strong>Operasi:</strong> ${operation}</p>
+                        <p class="text-lg font-medium"><strong>Mode:</strong> ${mode === 'latihan' ? 'Latihan Hafalan (Flash Card)' : 'Tes Hafalan (Isian Singkat)'}</p>
+                    </div>
+            `;
+
+            if (mode === 'tes') {
+                resultHTML += `<h2 class="text-2xl font-bold text-gray-700 text-center">Skor: <span class="text-green-600">${score}</span> dari <span class="text-gray-500">${totalQuestions}</span></h2>`;
+                resultHTML += `<h3 class="text-xl font-bold text-gray-700 text-center">Total Waktu: ${formattedTotalTime} detik</h3>`;
+                
+                testAnswers.forEach((answer, index) => {
+                    const status = answer.isCorrect ? 'Benar' : 'Salah';
+                    const statusColor = answer.isCorrect ? 'text-green-600' : 'text-red-600';
+                    const timeTaken = answer.isCorrect ? answer.time : 'N/A';
+                    resultHTML += `
+                        <div class="bg-white p-4 rounded-lg shadow-md">
+                            <p class="font-semibold text-lg mb-1">Soal ${index + 1}: ${answer.question} = <span class="font-bold">${answer.correctAnswer}</span></p>
+                            <p class="text-sm">Jawaban Anda: <span class="${statusColor} font-bold">${answer.userAnswer}</span></p>
+                            <p class="text-sm">Hasil: <span class="${statusColor} font-bold">${status}</span></p>
+                            <p class="text-sm">Waktu: <span class="font-bold">${timeTaken}</span></p>
+                        </div>
+                    `;
+                });
+            } else {
+                 resultHTML += `<h2 class="text-2xl font-bold text-gray-700 text-center">Latihan Selesai!</h2>`;
+                 resultHTML += `<p class="text-gray-600 text-center">Anda telah menyelesaikan sesi latihan flash card. Silakan coba mode tes untuk menguji pemahaman Anda.</p>`;
+            }
+
+            resultHTML += `
+                </div>
+                <div class="mt-8 flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+                    <button onclick="renderStartPage()" class="w-full sm:w-auto py-3 text-lg font-semibold text-gray-700 bg-gray-200 rounded-xl hover:bg-gray-300 transition-colors duration-300">Mulai Lagi</button>
+                </div>
+            `;
+            mainContainer.innerHTML = resultHTML;
+            animateElement('#result-content');
+        }
+
+        // Jalankan aplikasi
+        renderStartPage();
+    </script>
+</body>
+</html>
