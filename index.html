@@ -112,16 +112,41 @@
             
             if (isMultiplication) {
                 numberSelectionHTML = `
-                    <button onclick="setNumber('campuran')" class="w-full py-3 text-lg font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors duration-300 transform hover:scale-105">Tes Campuran (1-10)</button>
+                    <div class="space-y-4">
+                        <h3 class="text-xl font-semibold text-gray-700">Perkalian Dasar</h3>
+                        <button onclick="setNumber('campuran')" class="w-full py-3 text-lg font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors duration-300 transform hover:scale-105">Tes Campuran (1-10)</button>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            ${Array.from({length: 10}, (_, i) => i + 1).map(num => `
+                                <button onclick="setNumber(${num})" class="w-full py-3 text-lg font-semibold text-white bg-pink-500 rounded-xl hover:bg-pink-600 transition-colors duration-300 transform hover:scale-105">${num}</button>
+                            `).join('')}
+                        </div>
+                `;
+                
+                // Tampilkan opsi multi-digit hanya untuk mode tes
+                if (mode === 'tes') {
+                    numberSelectionHTML += `
+                        <h3 class="text-xl font-semibold text-gray-700 mt-6">Perkalian Multi-Digit</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <button onclick="setNumber('2x1')" class="py-3 text-lg font-semibold text-white bg-green-500 rounded-xl hover:bg-green-600 transition-colors duration-300 transform hover:scale-105">2 Digit × 1 Digit</button>
+                            <button onclick="setNumber('3x1')" class="py-3 text-lg font-semibold text-white bg-green-500 rounded-xl hover:bg-green-600 transition-colors duration-300 transform hover:scale-105">3 Digit × 1 Digit</button>
+                            <button onclick="setNumber('4x1')" class="py-3 text-lg font-semibold text-white bg-green-500 rounded-xl hover:bg-green-600 transition-colors duration-300 transform hover:scale-105">4 Digit × 1 Digit</button>
+                            <button onclick="setNumber('2x2')" class="py-3 text-lg font-semibold text-white bg-purple-500 rounded-xl hover:bg-purple-600 transition-colors duration-300 transform hover:scale-105">2 Digit × 2 Digit</button>
+                            <button onclick="setNumber('3x2')" class="py-3 text-lg font-semibold text-white bg-purple-500 rounded-xl hover:bg-purple-600 transition-colors duration-300 transform hover:scale-105">3 Digit × 2 Digit</button>
+                            <button onclick="setNumber('4x2')" class="py-3 text-lg font-semibold text-white bg-purple-500 rounded-xl hover:bg-purple-600 transition-colors duration-300 transform hover:scale-105">4 Digit × 2 Digit</button>
+                        </div>
+                    `;
+                }
+                
+                numberSelectionHTML += `</div>`;
+            } else {
+                numberSelectionHTML = `
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        ${Array.from({length: 10}, (_, i) => i + 1).map(num => `
+                            <button onclick="setNumber(${num})" class="w-full py-3 text-lg font-semibold text-white bg-pink-500 rounded-xl hover:bg-pink-600 transition-colors duration-300 transform hover:scale-105">${num}</button>
+                        `).join('')}
+                    </div>
                 `;
             }
-            numberSelectionHTML += `
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    ${Array.from({length: 10}, (_, i) => i + 1).map(num => `
-                        <button onclick="setNumber(${num})" class="w-full py-3 text-lg font-semibold text-white bg-pink-500 rounded-xl hover:bg-pink-600 transition-colors duration-300 transform hover:scale-105">${num}</button>
-                    `).join('')}
-                </div>
-            `;
 
             mainContainer.innerHTML = `
                 <div id="number-screen" class="space-y-6">
@@ -143,8 +168,8 @@
         // Tampilkan halaman pilihan jumlah soal
         function renderQuestionCountSelection() {
             let options = [];
-            if (number === 'campuran') {
-                options = [20, 30, 40];
+            if (number === 'campuran' || ['2x1', '3x1', '4x1', '2x2', '3x2', '4x2'].includes(number)) {
+                options = [10, 15, 20, 25];
             } else {
                 options = [5, 10, 15, 20];
             }
@@ -185,6 +210,20 @@
                 </div>
             `;
             animateElement('#difficulty-screen');
+        }
+
+        // Helper function untuk mendapatkan nama tampilan dari tipe perkalian
+        function getMultiplicationDisplayName(numberType) {
+            const displayNames = {
+                'campuran': '(Campuran)',
+                '2x1': '(2 Digit × 1 Digit)',
+                '3x1': '(3 Digit × 1 Digit)',
+                '4x1': '(4 Digit × 1 Digit)',
+                '2x2': '(2 Digit × 2 Digit)',
+                '3x2': '(3 Digit × 2 Digit)',
+                '4x2': '(4 Digit × 2 Digit)'
+            };
+            return displayNames[numberType] || numberType;
         }
 
         // Simpan kesulitan dan mulai tes atau latihan
@@ -229,7 +268,50 @@
                             b = possibleNumbers[Math.floor(Math.random() * possibleNumbers.length)];
                         } while (a === lastA && b === lastB);
                         answer = a * b;
+                    } else if (number === '2x1') {
+                        // 2 digit x 1 digit
+                        do {
+                            a = Math.floor(Math.random() * 90) + 10; // 10-99
+                            b = Math.floor(Math.random() * 9) + 1; // 1-9
+                        } while (a === lastA && b === lastB);
+                        answer = a * b;
+                    } else if (number === '3x1') {
+                        // 3 digit x 1 digit
+                        do {
+                            a = Math.floor(Math.random() * 900) + 100; // 100-999
+                            b = Math.floor(Math.random() * 9) + 1; // 1-9
+                        } while (a === lastA && b === lastB);
+                        answer = a * b;
+                    } else if (number === '4x1') {
+                        // 4 digit x 1 digit
+                        do {
+                            a = Math.floor(Math.random() * 9000) + 1000; // 1000-9999
+                            b = Math.floor(Math.random() * 9) + 1; // 1-9
+                        } while (a === lastA && b === lastB);
+                        answer = a * b;
+                    } else if (number === '2x2') {
+                        // 2 digit x 2 digit
+                        do {
+                            a = Math.floor(Math.random() * 90) + 10; // 10-99
+                            b = Math.floor(Math.random() * 90) + 10; // 10-99
+                        } while (a === lastA && b === lastB);
+                        answer = a * b;
+                    } else if (number === '3x2') {
+                        // 3 digit x 2 digit
+                        do {
+                            a = Math.floor(Math.random() * 900) + 100; // 100-999
+                            b = Math.floor(Math.random() * 90) + 10; // 10-99
+                        } while (a === lastA && b === lastB);
+                        answer = a * b;
+                    } else if (number === '4x2') {
+                        // 4 digit x 2 digit
+                        do {
+                            a = Math.floor(Math.random() * 9000) + 1000; // 1000-9999
+                            b = Math.floor(Math.random() * 90) + 10; // 10-99
+                        } while (a === lastA && b === lastB);
+                        answer = a * b;
                     } else {
+                        // Perkalian dasar (1-10)
                         do {
                             a = possibleNumbers[Math.floor(Math.random() * possibleNumbers.length)];
                         } while (a === lastA);
@@ -274,7 +356,7 @@
             
             mainContainer.innerHTML = `
                 <div id="flashcard-screen" class="space-y-6">
-                    <h2 class="text-3xl font-semibold text-gray-700">Latihan Flash Card: ${operation} ${number === 'campuran' ? '(Campuran)' : number}</h2>
+                    <h2 class="text-3xl font-semibold text-gray-700">Latihan Flash Card: ${operation} ${getMultiplicationDisplayName(number)}</h2>
                     <div class="w-full max-w-sm mx-auto h-64 p-4 [perspective:1000px]">
                         <div id="flashcard" class="relative w-full h-full rounded-2xl shadow-xl bg-gray-100 cursor-pointer transition-transform duration-500 [transform-style:preserve-3d]" onclick="flipFlashcard()">
                             <!-- Front side -->
@@ -331,7 +413,7 @@
 
             mainContainer.innerHTML = `
                 <div id="test-screen" class="space-y-6">
-                    <h2 class="text-3xl font-semibold text-gray-700">Tes ${operation}: ${number === 'campuran' ? '(Campuran)' : number}</h2>
+                    <h2 class="text-3xl font-semibold text-gray-700">Tes ${operation}: ${getMultiplicationDisplayName(number)}</h2>
                     <div class="flex justify-between items-center text-gray-700">
                         <span class="text-xl font-bold">Soal ${currentQuestionIndex + 1} dari ${totalQuestions}</span>
                         <div class="flex items-center space-x-2">
