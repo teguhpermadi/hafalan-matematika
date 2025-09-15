@@ -27,6 +27,7 @@
         let timerSeconds = 30;
         let startTimePerQuestion;
         let totalTimeElapsed = 0;
+        let selectedMultiplicationTables = [];
 
         // Tampilkan halaman awal
         function renderStartPage() {
@@ -162,7 +163,79 @@
         // Simpan angka dan tampilkan halaman pilihan jumlah soal
         function setNumber(selectedNumber) {
             number = selectedNumber;
+            // Jika memilih perkalian multi-digit, tanyakan tabel perkalian yang sudah dihafal
+            if (['2x1', '3x1', '4x1', '2x2', '3x2', '4x2'].includes(selectedNumber)) {
+                renderMultiplicationTableSelection();
+            } else {
+                renderQuestionCountSelection();
+            }
+        }
+
+        // Tampilkan halaman pilihan tabel perkalian yang sudah dihafal
+        function renderMultiplicationTableSelection() {
+            mainContainer.innerHTML = `
+                <div id="table-selection-screen" class="space-y-6">
+                    <h1 class="text-3xl font-bold text-gray-800">Pilih Tabel Perkalian</h1>
+                    <p class="text-gray-600">Pilih tabel perkalian yang sudah Anda hafal untuk ${getMultiplicationDisplayName(number)}:</p>
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <p class="text-sm text-blue-700 mb-3"><strong>Petunjuk:</strong> Pilih semua tabel perkalian yang sudah Anda kuasai. Soal akan dibuat berdasarkan pilihan Anda.</p>
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+                            ${Array.from({length: 10}, (_, i) => i + 1).map(num => `
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" id="table-${num}" value="${num}" class="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500">
+                                    <span class="text-sm font-medium text-gray-700">Tabel ${num}</span>
+                                </label>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="flex space-x-4">
+                        <button onclick="selectAllTables()" class="flex-1 py-3 text-lg font-semibold text-white bg-green-500 rounded-xl hover:bg-green-600 transition-colors duration-300">Pilih Semua</button>
+                        <button onclick="clearAllTables()" class="flex-1 py-3 text-lg font-semibold text-white bg-red-500 rounded-xl hover:bg-red-600 transition-colors duration-300">Hapus Semua</button>
+                    </div>
+                    <button onclick="confirmTableSelection()" class="w-full py-3 text-lg font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors duration-300">Lanjutkan</button>
+                    <button onclick="renderNumberSelection()" class="w-full py-3 text-lg font-semibold text-gray-700 bg-gray-200 rounded-xl hover:bg-gray-300 transition-colors duration-300">Kembali</button>
+                    <div id="table-alert-message" class="mt-4 hidden p-3 bg-red-100 text-red-700 rounded-lg"></div>
+                </div>
+            `;
+            animateElement('#table-selection-screen');
+        }
+
+        // Pilih semua tabel perkalian
+        function selectAllTables() {
+            for (let i = 1; i <= 10; i++) {
+                document.getElementById(`table-${i}`).checked = true;
+            }
+        }
+
+        // Hapus semua pilihan tabel perkalian
+        function clearAllTables() {
+            for (let i = 1; i <= 10; i++) {
+                document.getElementById(`table-${i}`).checked = false;
+            }
+        }
+
+        // Konfirmasi pilihan tabel perkalian
+        function confirmTableSelection() {
+            selectedMultiplicationTables = [];
+            for (let i = 1; i <= 10; i++) {
+                if (document.getElementById(`table-${i}`).checked) {
+                    selectedMultiplicationTables.push(i);
+                }
+            }
+            
+            if (selectedMultiplicationTables.length === 0) {
+                showTableAlert("Silakan pilih minimal satu tabel perkalian!");
+                return;
+            }
+            
             renderQuestionCountSelection();
+        }
+
+        // Tampilkan pesan kesalahan untuk tabel selection
+        function showTableAlert(message) {
+            const alertBox = document.getElementById('table-alert-message');
+            alertBox.textContent = message;
+            alertBox.classList.remove('hidden');
         }
 
         // Tampilkan halaman pilihan jumlah soal
@@ -272,42 +345,51 @@
                         // 2 digit x 1 digit
                         do {
                             a = Math.floor(Math.random() * 90) + 10; // 10-99
-                            b = Math.floor(Math.random() * 9) + 1; // 1-9
+                            b = selectedMultiplicationTables[Math.floor(Math.random() * selectedMultiplicationTables.length)];
                         } while (a === lastA && b === lastB);
                         answer = a * b;
                     } else if (number === '3x1') {
                         // 3 digit x 1 digit
                         do {
                             a = Math.floor(Math.random() * 900) + 100; // 100-999
-                            b = Math.floor(Math.random() * 9) + 1; // 1-9
+                            b = selectedMultiplicationTables[Math.floor(Math.random() * selectedMultiplicationTables.length)];
                         } while (a === lastA && b === lastB);
                         answer = a * b;
                     } else if (number === '4x1') {
                         // 4 digit x 1 digit
                         do {
                             a = Math.floor(Math.random() * 9000) + 1000; // 1000-9999
-                            b = Math.floor(Math.random() * 9) + 1; // 1-9
+                            b = selectedMultiplicationTables[Math.floor(Math.random() * selectedMultiplicationTables.length)];
                         } while (a === lastA && b === lastB);
                         answer = a * b;
                     } else if (number === '2x2') {
                         // 2 digit x 2 digit
                         do {
                             a = Math.floor(Math.random() * 90) + 10; // 10-99
-                            b = Math.floor(Math.random() * 90) + 10; // 10-99
+                            // Untuk 2x2, gunakan tabel perkalian yang dipilih untuk digit kedua
+                            let tensDigit = selectedMultiplicationTables[Math.floor(Math.random() * selectedMultiplicationTables.length)];
+                            let onesDigit = Math.floor(Math.random() * 10); // 0-9
+                            b = tensDigit * 10 + onesDigit;
                         } while (a === lastA && b === lastB);
                         answer = a * b;
                     } else if (number === '3x2') {
                         // 3 digit x 2 digit
                         do {
                             a = Math.floor(Math.random() * 900) + 100; // 100-999
-                            b = Math.floor(Math.random() * 90) + 10; // 10-99
+                            // Untuk 3x2, gunakan tabel perkalian yang dipilih untuk digit kedua
+                            let tensDigit = selectedMultiplicationTables[Math.floor(Math.random() * selectedMultiplicationTables.length)];
+                            let onesDigit = Math.floor(Math.random() * 10); // 0-9
+                            b = tensDigit * 10 + onesDigit;
                         } while (a === lastA && b === lastB);
                         answer = a * b;
                     } else if (number === '4x2') {
                         // 4 digit x 2 digit
                         do {
                             a = Math.floor(Math.random() * 9000) + 1000; // 1000-9999
-                            b = Math.floor(Math.random() * 90) + 10; // 10-99
+                            // Untuk 4x2, gunakan tabel perkalian yang dipilih untuk digit kedua
+                            let tensDigit = selectedMultiplicationTables[Math.floor(Math.random() * selectedMultiplicationTables.length)];
+                            let onesDigit = Math.floor(Math.random() * 10); // 0-9
+                            b = tensDigit * 10 + onesDigit;
                         } while (a === lastA && b === lastB);
                         answer = a * b;
                     } else {
