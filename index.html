@@ -78,10 +78,42 @@
             animateElement('#operation-screen');
         }
 
-        // Simpan operasi dan tampilkan halaman pilihan mode
+        // Simpan operasi dan tampilkan halaman pilihan mode atau submenu pembagian
         function setOperation(selectedOperation) {
             operation = selectedOperation;
-            renderModeSelection();
+            if (selectedOperation === 'pembagian') {
+                renderDivisionTypeSelection();
+            } else {
+                renderModeSelection();
+            }
+        }
+
+        // Tampilkan halaman pilihan tipe pembagian
+        function renderDivisionTypeSelection() {
+            mainContainer.innerHTML = `
+                <div id="division-type-screen" class="space-y-6">
+                    <h1 class="text-4xl font-bold text-gray-800">Pilih Tipe Pembagian</h1>
+                    <p class="text-gray-600">Pilih jenis pembagian yang ingin Anda latih:</p>
+                    <div class="space-y-4">
+                        <button onclick="setDivisionType('biasa')" class="w-full py-4 text-xl font-semibold text-white bg-blue-500 rounded-xl hover:bg-blue-600 transition-colors duration-300 transform hover:scale-105">Pembagian Biasa</button>
+                        <button onclick="setDivisionType('bersusun')" class="w-full py-4 text-xl font-semibold text-white bg-purple-500 rounded-xl hover:bg-purple-600 transition-colors duration-300 transform hover:scale-105">Pembagian Bersusun</button>
+                    </div>
+                    <button onclick="renderOperationSelection()" class="mt-6 w-full py-3 text-lg font-semibold text-gray-700 bg-gray-200 rounded-xl hover:bg-gray-300 transition-colors duration-300">Kembali</button>
+                </div>
+            `;
+            animateElement('#division-type-screen');
+        }
+
+        // Simpan tipe pembagian dan lanjut ke mode selection atau langsung ke number selection
+        function setDivisionType(divisionType) {
+            if (divisionType === 'biasa') {
+                operation = 'pembagian';
+                renderModeSelection();
+            } else {
+                operation = 'pembagian_bersusun';
+                mode = 'tes'; // Langsung set ke mode tes untuk pembagian bersusun
+                renderNumberSelection();
+            }
         }
 
         // Tampilkan halaman pilihan mode (Latihan atau Tes)
@@ -110,6 +142,7 @@
         function renderNumberSelection() {
             let numberSelectionHTML = '';
             let isMultiplication = operation === 'perkalian';
+            let isLongDivision = operation === 'pembagian_bersusun';
             
             if (isMultiplication) {
                 numberSelectionHTML = `
@@ -139,6 +172,18 @@
                 }
                 
                 numberSelectionHTML += `</div>`;
+            } else if (isLongDivision) {
+                numberSelectionHTML = `
+                    <div class="space-y-4">
+                        <h3 class="text-xl font-semibold text-gray-700">Pembagian Bersusun</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <button onclick="setNumber('2d1d')" class="py-3 text-lg font-semibold text-white bg-yellow-500 rounded-xl hover:bg-yellow-600 transition-colors duration-300 transform hover:scale-105">2 Digit</button>
+                            <button onclick="setNumber('3d1d')" class="py-3 text-lg font-semibold text-white bg-green-500 rounded-xl hover:bg-green-600 transition-colors duration-300 transform hover:scale-105">3 Digit</button>
+                            <button onclick="setNumber('4d1d')" class="py-3 text-lg font-semibold text-white bg-blue-500 rounded-xl hover:bg-blue-600 transition-colors duration-300 transform hover:scale-105">4 Digit</button>
+                            <button onclick="setNumber('5d1d')" class="py-3 text-lg font-semibold text-white bg-purple-500 rounded-xl hover:bg-purple-600 transition-colors duration-300 transform hover:scale-105">5 Digit</button>
+                        </div>
+                    </div>
+                `;
             } else {
                 numberSelectionHTML = `
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -241,7 +286,7 @@
         // Tampilkan halaman pilihan jumlah soal
         function renderQuestionCountSelection() {
             let options = [];
-            if (number === 'campuran' || ['2x1', '3x1', '4x1', '2x2', '3x2', '4x2'].includes(number)) {
+            if (number === 'campuran' || ['2x1', '3x1', '4x1', '2x2', '3x2', '4x2', '2d1d', '3d1d', '4d1d', '5d1d'].includes(number)) {
                 options = [10, 15, 20, 25];
             } else {
                 options = [5, 10, 15, 20];
@@ -274,10 +319,11 @@
                 <div id="difficulty-screen" class="space-y-6">
                     <h1 class="text-3xl font-bold text-gray-800">Pilih Tingkat Kesulitan</h1>
                     <p class="text-gray-600">Pilih batas waktu untuk setiap soal:</p>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <button onclick="setDifficulty('mudah')" class="py-3 text-lg font-semibold text-white bg-green-500 rounded-xl hover:bg-green-600 transition-colors duration-300 transform hover:scale-105">Mudah (30s)</button>
                         <button onclick="setDifficulty('sedang')" class="py-3 text-lg font-semibold text-white bg-yellow-500 rounded-xl hover:bg-yellow-600 transition-colors duration-300 transform hover:scale-105">Sedang (20s)</button>
                         <button onclick="setDifficulty('sulit')" class="py-3 text-lg font-semibold text-white bg-red-500 rounded-xl hover:bg-red-600 transition-colors duration-300 transform hover:scale-105">Sulit (10s)</button>
+                        <button onclick="setDifficulty('longgar')" class="py-3 text-lg font-semibold text-white bg-gray-500 rounded-xl hover:bg-gray-600 transition-colors duration-300 transform hover:scale-105">Longgar (Tanpa Waktu)</button>
                     </div>
                     <button onclick="renderQuestionCountSelection()" class="mt-6 w-full py-3 text-lg font-semibold text-gray-700 bg-gray-200 rounded-xl hover:bg-gray-300 transition-colors duration-300">Kembali</button>
                 </div>
@@ -294,7 +340,11 @@
                 '4x1': '(4 Digit × 1 Digit)',
                 '2x2': '(2 Digit × 2 Digit)',
                 '3x2': '(3 Digit × 2 Digit)',
-                '4x2': '(4 Digit × 2 Digit)'
+                '4x2': '(4 Digit × 2 Digit)',
+                '2d1d': '(2 Digit)',
+                '3d1d': '(3 Digit)',
+                '4d1d': '(4 Digit)',
+                '5d1d': '(5 Digit)'
             };
             return displayNames[numberType] || numberType;
         }
@@ -310,6 +360,9 @@
                     break;
                 case 'sulit':
                     timerSeconds = 10;
+                    break;
+                case 'longgar':
+                    timerSeconds = 0; // No time limit
                     break;
             }
             generateQuestions();
@@ -400,13 +453,47 @@
                         b = number;
                         answer = a * b;
                     }
-                } else { // Pembagian
+                } else if (operation === 'pembagian') { // Pembagian biasa
                     do {
                         let multiplier = possibleNumbers[Math.floor(Math.random() * possibleNumbers.length)];
                         a = number * multiplier;
                         b = number;
                         answer = multiplier;
                     } while (a === lastA && b === lastB);
+                } else if (operation === 'pembagian_bersusun') { // Pembagian bersusun
+                    if (number === '2d1d') {
+                        // 2 digit
+                        do {
+                            b = Math.floor(Math.random() * 9) + 2; // 2-9 (avoid 1 and 0)
+                            let quotient = Math.floor(Math.random() * 90) + 10; // 10-99
+                            a = b * quotient;
+                            answer = quotient;
+                        } while (a === lastA && b === lastB);
+                    } else if (number === '3d1d') {
+                        // 3 digit
+                        do {
+                            b = Math.floor(Math.random() * 9) + 2; // 2-9 (avoid 1 and 0)
+                            let quotient = Math.floor(Math.random() * 900) + 100; // 100-999
+                            a = b * quotient;
+                            answer = quotient;
+                        } while (a === lastA && b === lastB);
+                    } else if (number === '4d1d') {
+                        // 4 digit
+                        do {
+                            b = Math.floor(Math.random() * 9) + 2; // 2-9 (avoid 1 and 0)
+                            let quotient = Math.floor(Math.random() * 9000) + 1000; // 1000-9999
+                            a = b * quotient;
+                            answer = quotient;
+                        } while (a === lastA && b === lastB);
+                    } else if (number === '5d1d') {
+                        // 5 digit
+                        do {
+                            b = Math.floor(Math.random() * 9) + 2; // 2-9 (avoid 1 and 0)
+                            let quotient = Math.floor(Math.random() * 90000) + 10000; // 10000-99999
+                            a = b * quotient;
+                            answer = quotient;
+                        } while (a === lastA && b === lastB);
+                    }
                 }
                 questions.push({ a, b, answer });
                 lastA = a;
@@ -480,18 +567,21 @@
             const symbol = operation === 'perkalian' ? 'x' : '÷';
             const questionText = `${question.a} ${symbol} ${question.b} = ?`;
 
-            // Set timer
+            // Set timer (only if not in longgar mode)
             let remainingTime = timerSeconds;
             startTimePerQuestion = Date.now();
             clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                remainingTime--;
-                if (remainingTime <= 0) {
-                    clearInterval(timerInterval);
-                    checkAnswer(true); // Waktu habis
-                }
-                updateTimerDisplay(remainingTime);
-            }, 1000);
+            
+            if (timerSeconds > 0) {
+                timerInterval = setInterval(() => {
+                    remainingTime--;
+                    if (remainingTime <= 0) {
+                        clearInterval(timerInterval);
+                        checkAnswer(true); // Waktu habis
+                    }
+                    updateTimerDisplay(remainingTime);
+                }, 1000);
+            }
 
             mainContainer.innerHTML = `
                 <div id="test-screen" class="space-y-6">
@@ -499,7 +589,7 @@
                     <div class="flex justify-between items-center text-gray-700">
                         <span class="text-xl font-bold">Soal ${currentQuestionIndex + 1} dari ${totalQuestions}</span>
                         <div class="flex items-center space-x-2">
-                            <span class="text-red-500 font-bold text-2xl">Waktu: <span id="timer-display">${remainingTime}</span>s</span>
+                            ${timerSeconds > 0 ? `<span class="text-red-500 font-bold text-2xl">Waktu: <span id="timer-display">${remainingTime}</span>s</span>` : `<span class="text-blue-500 font-bold text-2xl">Mode Longgar</span>`}
                         </div>
                     </div>
                     <div id="question-element" class="text-5xl font-extrabold text-indigo-600 p-6 bg-gray-100 rounded-xl">${questionText}</div>
@@ -531,11 +621,11 @@
             const isCorrect = userAnswer === question.answer;
 
             testAnswers.push({
-                question: `${question.a} ${operation === 'perkalian' ? 'x' : '÷'} ${question.b}`,
+                question: `${question.a} ${(operation === 'perkalian') ? 'x' : '÷'} ${question.b}`,
                 userAnswer: timeout ? 'Waktu habis' : (isNaN(userAnswer) ? 'Tidak dijawab' : userAnswer),
                 correctAnswer: question.answer,
                 isCorrect: isCorrect,
-                time: timeout ? 'N/A' : timeTaken + 's'
+                time: timeout ? 'N/A' : (timerSeconds === 0 ? 'Tanpa batas waktu' : timeTaken + 's')
             });
             
             if (!timeout) {
@@ -559,27 +649,49 @@
                     <h1 class="text-3xl font-bold text-gray-800 text-center">Hasil Latihan</h1>
                     <div class="bg-gray-100 p-6 rounded-lg space-y-2">
                         <p class="text-lg font-medium"><strong>Nama Siswa:</strong> ${userName}</p>
-                        <p class="text-lg font-medium"><strong>Operasi:</strong> ${operation}</p>
+                        <p class="text-lg font-medium"><strong>Operasi:</strong> ${operation === 'pembagian_bersusun' ? 'Pembagian Bersusun' : operation}</p>
                         <p class="text-lg font-medium"><strong>Mode:</strong> ${mode === 'latihan' ? 'Latihan Hafalan (Flash Card)' : 'Tes Hafalan (Isian Singkat)'}</p>
                     </div>
             `;
 
             if (mode === 'tes') {
                 resultHTML += `<h2 class="text-2xl font-bold text-gray-700 text-center">Skor: <span class="text-green-600">${score}</span> dari <span class="text-gray-500">${totalQuestions}</span></h2>`;
-                resultHTML += `<h3 class="text-xl font-bold text-gray-700 text-center">Total Waktu: ${formattedTotalTime} detik</h3>`;
+                if (timerSeconds > 0) {
+                    resultHTML += `<h3 class="text-xl font-bold text-gray-700 text-center">Total Waktu: ${formattedTotalTime} detik</h3>`;
+                } else {
+                    resultHTML += `<h3 class="text-xl font-bold text-gray-700 text-center">Mode: Tanpa Batas Waktu</h3>`;
+                }
                 
                 testAnswers.forEach((answer, index) => {
                     const status = answer.isCorrect ? 'Benar' : 'Salah';
                     const statusColor = answer.isCorrect ? 'text-green-600' : 'text-red-600';
                     const timeTaken = answer.time;
+                    
+                    // Parse the question to get dividend and divisor for long division
+                    const questionParts = answer.question.split(' ÷ ');
+                    const dividend = questionParts[0];
+                    const divisor = questionParts[1];
+                    
                     resultHTML += `
                         <div class="bg-white p-4 rounded-lg shadow-md">
                             <p class="font-semibold text-lg mb-1">Soal ${index + 1}: ${answer.question} = <span class="font-bold">${answer.correctAnswer}</span></p>
                             <p class="text-sm">Jawaban Anda: <span class="${statusColor} font-bold">${answer.userAnswer}</span></p>
                             <p class="text-sm">Hasil: <span class="${statusColor} font-bold">${status}</span></p>
-                            <p class="text-sm">Waktu: <span class="font-bold">${timeTaken}</span></p>
-                        </div>
-                    `;
+                            <p class="text-sm">Waktu: <span class="font-bold">${timeTaken}</span></p>`;
+                    
+                    // Add step-by-step solution for long division
+                    if (operation === 'pembagian_bersusun' && dividend && divisor) {
+                        resultHTML += `
+                            <div class="mt-3 p-3 bg-blue-50 rounded-lg">
+                                <p class="text-sm font-semibold text-blue-800 mb-2">Kunci Jawaban:</p>
+                                <div class="font-mono text-sm text-blue-700">
+                                    <p>${dividend} ÷ ${divisor} = ${answer.correctAnswer}</p>
+                                    <p>Pemeriksaan: ${answer.correctAnswer} × ${divisor} = ${dividend}</p>
+                                </div>
+                            </div>`;
+                    }
+                    
+                    resultHTML += `</div>`;
                 });
             } else {
                  resultHTML += `<h2 class="text-2xl font-bold text-gray-700 text-center">Latihan Selesai!</h2>`;
